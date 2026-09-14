@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
         assetPrefix: githubPagesBasePath,
         trailingSlash: true,
         images: { unoptimized: true },
+        typescript: { tsconfigPath: "tsconfig.github-pages.json" },
       }
     : {}),
 };
