@@ -2,7 +2,7 @@
 
 Lumen Tarot 是一个面向中文用户的沉浸式塔罗自我反思网站。产品通过牌阵结构、牌面象征、正逆位和可行动建议，帮助用户观察问题，而不是替用户做决定。
 
-**在线体验：** [lumentarot.cn](https://lumentarot.cn)
+**在线体验：** [rosyzhao123.github.io/lumen-tarot](https://rosyzhao123.github.io/lumen-tarot/)
 
 ## 产品特性
 

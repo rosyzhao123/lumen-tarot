@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import type { CSSProperties } from "react";
 import "./globals.css";
+import { sitePath } from "./site-path";
 
 export const metadata: Metadata = {
   title: "Lumen Tarot｜手绘塔罗抽牌",
@@ -7,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="zh-CN"><body>{children}</body></html>;
+  const style = {
+    "--tarot-card-back-image": `url("${sitePath("/tarot-card-back.png")}")`,
+  } as CSSProperties;
+
+  return <html lang="zh-CN"><body style={style}>{children}</body></html>;
 }

@@ -1,3 +1,5 @@
+import { sitePath } from "./site-path";
+
 export type TarotCard = {
   id: string;
   name: string;
@@ -120,7 +122,7 @@ const majorCards: TarotCard[] = majors.map(([label, name, cn, upright, reversed,
   label,
   family: "major",
   symbol: symbols[index],
-  image: `/cards/m${String(index).padStart(2, "0")}.jpg`,
+  image: sitePath(`/cards/m${String(index).padStart(2, "0")}.jpg`),
   upright: `${cn} · ${upright}`,
   reversed: `${cn} · ${reversed}`,
   message,
@@ -160,7 +162,7 @@ const minorCards: TarotCard[] = suits.flatMap((suit) => ranks.map(([rank, label,
   family: "minor" as const,
   suit: suit.id,
   symbol: suit.symbol,
-  image: `/cards/${suit.prefix}${String(rankIndex + 1).padStart(2, "0")}.jpg`,
+  image: sitePath(`/cards/${suit.prefix}${String(rankIndex + 1).padStart(2, "0")}.jpg`),
   upright: `${suit.cn} · ${suit.theme}；${rankMeaning}`,
   reversed: `${suit.cn} · ${suit.reversed}；这股能量需要被重新整理`,
   message: `从${suit.theme}的角度看，${rankMeaning}。`,

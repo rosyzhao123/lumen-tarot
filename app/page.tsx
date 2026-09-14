@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import HistoryArchive from "./HistoryArchive";
 import { SoundToggle, useRitualSound } from "./ritual-sound";
+import { sitePath } from "./site-path";
 import { spreadVisualCards } from "./spread-visuals";
 import { spreads } from "./tarot-data";
 
@@ -25,7 +26,7 @@ export default function Home() {
     if (leaving) return;
     sound.play("transition");
     setLeaving(spreadId);
-    window.setTimeout(() => window.location.assign(`/reading?spread=${spreadId}`), 620);
+    window.setTimeout(() => window.location.assign(sitePath(`/reading?spread=${spreadId}`)), 620);
   }
 
   return (

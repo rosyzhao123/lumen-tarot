@@ -2,10 +2,15 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SoundToggle, useRitualSound } from "../ritual-sound";
+import { sitePath } from "../site-path";
 import { spreadVisualCards } from "../spread-visuals";
 import { defaultQuestion, spreads, tarotDeck, type Spread, type TarotCard } from "../tarot-data";
 
-type DrawnCard = TarotCard & { reversed: boolean; revealed: boolean };
+type DrawnCard = Omit<TarotCard, "reversed"> & {
+  reversed: boolean;
+  reversedMeaning: string;
+  revealed: boolean;
+};
 type RitualStep = "idle" | "meditating" | "shuffling" | "choosing" | "placing" | "reading";
 
 function shuffle<T>(items: T[]) {
@@ -21,7 +26,7 @@ function StarField() {
   return <div className="star-field" aria-hidden="true">{Array.from({ length: 38 }, (_, i) => <i key={i} style={{ left: `${(i * 37 + 11) % 97}%`, top: `${(i * 53 + 7) % 94}%`, animationDelay: `${(i % 8) * -.7}s` }} />)}</div>;
 }
 
-function CardArtwork({ card }: { card: TarotCard }) {
+function CardArtwork({ card }: { card: Pick<TarotCard, "image" | "name"> }) {
   return <img src={card.image} alt={card.name} draggable={false} />;
 }
 
@@ -165,7 +170,7 @@ function cardTitle(card: DrawnCard) {
 }
 
 function cardMeaning(card: DrawnCard) {
-  return card.reversed ? card.reversed : card.upright;
+  return card.reversed ? card.reversedMeaning : card.upright;
 }
 
 function describeEnergy(card: DrawnCard) {
@@ -313,6 +318,12 @@ function readArchives(): ArchiveRecord[] {
       .map((record, index) => ({
         ...record,
         id: record.id ?? `${record.date}-${index}`,
+        cards: Array.isArray(record.cards)
+          ? record.cards.map((card: DrawnCard) => ({
+              ...card,
+              reversedMeaning: card.reversedMeaning ?? tarotDeck.find((deckCard) => deckCard.id === card.id)?.reversed ?? "这股能量需要被重新整理",
+            }))
+          : [],
       }))
       .slice(0, 12) as ArchiveRecord[];
   } catch {
@@ -406,7 +417,8 @@ function HistoryArchive({
 
 export default function ReadingClient({ initialSpreadId }: { initialSpreadId: string }) {
   const experienceRef = useRef<HTMLElement>(null);
-  const spread = spreads.find((item) => item.id === initialSpreadId) ?? spreads[0];
+  const [spreadId, setSpreadId] = useState(initialSpreadId);
+  const spread = spreads.find((item) => item.id === spreadId) ?? spreads[0];
   const [question, setQuestion] = useState(defaultQuestion[spread.id]);
   const [drawn, setDrawn] = useState<DrawnCard[]>([]);
   const [ritualDeck, setRitualDeck] = useState<DrawnCard[]>([]);
@@ -424,6 +436,13 @@ export default function ReadingClient({ initialSpreadId }: { initialSpreadId: st
   const sampleCards = (spreadVisualCards[spread.id] ?? spreadVisualCards.venus)
     .map((image) => tarotDeck.find((card) => card.image === image))
     .filter((card): card is TarotCard => Boolean(card));
+
+  useEffect(() => {
+    const requestedSpread = new URLSearchParams(window.location.search).get("spread");
+    if (!requestedSpread || requestedSpread === spreadId || !spreads.some((item) => item.id === requestedSpread)) return;
+    setSpreadId(requestedSpread);
+    setQuestion(defaultQuestion[requestedSpread]);
+  }, [spreadId]);
 
   useEffect(() => {
     const open = historyOpen || (ritualStep !== "idle" && ritualStep !== "reading");
@@ -462,11 +481,15 @@ export default function ReadingClient({ initialSpreadId }: { initialSpreadId: st
 
   function startRitual() {
     sound.play("enter");
-    const preparedDeck = shuffle(tarotDeck).map((card) => ({
-      ...card,
-      reversed: Math.random() < .42,
-      revealed: false,
-    }));
+    const preparedDeck = shuffle(tarotDeck).map((card) => {
+      const { reversed: reversedMeaning, ...cardData } = card;
+      return {
+        ...cardData,
+        reversed: Math.random() < .42,
+        reversedMeaning,
+        revealed: false,
+      };
+    });
     setRitualDeck(preparedDeck);
     setPickedIds([]);
     setDrawn([]);
@@ -557,13 +580,13 @@ export default function ReadingClient({ initialSpreadId }: { initialSpreadId: st
     setActiveArchiveId(null);
   }
 
-  const meaning = current?.reversed ? current.reversed : current?.upright;
-  const shadow = current?.reversed ? `逆位使这张牌的能量更偏向内在或受阻：${current.reversed}。先辨认它是被压抑、被夸大，还是尚未找到合适的表达方式。` : `即使处于正位，也要留意这张牌的阴影面：${current?.reversed}。当优势被过度使用时，它可能成为新的阻力。`;
+  const meaning = current?.reversed ? current.reversedMeaning : current?.upright;
+  const shadow = current?.reversed ? `逆位使这张牌的能量更偏向内在或受阻：${current.reversedMeaning}。先辨认它是被压抑、被夸大，还是尚未找到合适的表达方式。` : `即使处于正位，也要留意这张牌的阴影面：${current?.reversedMeaning}。当优势被过度使用时，它可能成为新的阻力。`;
 
   return (
     <main className="reading-page">
       <header className="topbar">
-        <a className="brand" href="/" aria-label="返回牌阵主页面"><span className="brand-mark">☾</span><span>LUMEN TAROT</span></a>
+        <a className="brand" href={sitePath("/")} aria-label="返回牌阵主页面"><span className="brand-mark">☾</span><span>LUMEN TAROT</span></a>
         <div className="top-arcana">ARCANA · RITUAL · REFLECTION</div>
         <div className="topbar-tools"><SoundToggle enabled={sound.enabled} onToggle={sound.toggle} /><button className={`history-button ${historyOpen ? "is-open" : ""}`} title="解读存档" aria-label="打开解读存档" onClick={openHistory}><span>↺</span><small>HISTORY</small></button></div>
       </header>
